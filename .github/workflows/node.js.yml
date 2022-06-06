@@ -43,3 +43,30 @@ jobs:
       
     - name: Build
       run: npm run build
+      
+    # Upload the artifact for other stages  
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.0
+      with:
+        name: build
+        path: rdicidr-0.1.0/build      
+  CD:
+    needs: [CI]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v3.0.0
+      with:
+        name: build
+
+    # Setou the AWS credentials
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    # Copy the files /build to s3
+    - name: Deploy static website to S3 bucket
+      run: aws s3 sync . s3://${{ secrets.S3_BUCKET_NAME }} --delete
