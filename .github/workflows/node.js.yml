@@ -1,15 +1,21 @@
 name: CI-CD
 
 on:
+  workflow_dispatch:
+  
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches:
+      - devel
+    paths:
+      - rdicidr-0.1.0/**
 
 jobs:
-  build:
-
+  CI:
     runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: rdicidr-0.1.0
 
     strategy:
       matrix:
@@ -17,11 +23,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Linter (ESLint)
+      run: npm run lint
+      
+    - name: Formatter (Prettier)
+      run: npm run prettier      
+
+    - name: Test (Jest)
+      run: CI=true npm run test
+      
+    - name: Build
+      run: npm run build
